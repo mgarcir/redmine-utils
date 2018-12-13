@@ -1,12 +1,25 @@
 const mason = require('commander');
 const redmine = require('./redmine');
-const idRegex = new RegExp('[0-9]{4,5}');
 const { version } = require('./package.json');
 
-function parseTaskId(bra)
-{
+function parseTaskId(taskId, branch){
+    const idRegex = new RegExp('[0-9]{4,5}');
 
-}
+    if(!branch && !taskId){
+        throw new Error('We need a valid Guid!!')
+    }
+
+    if(taskId && !idRegex.test(taskId))
+    {
+        throw new Error("This is not a valid Redmine Id!!");
+    }
+
+    if(branch && !idRegex.test(branch)){
+        throw new Error("This branch has not a valid Redmine Id!!");
+    };
+
+    return (branch)? branch.match(idRegex)[0] : taskId;
+};
 
 function composeGitDeleteCommands(branch){
     console.log("git push origin :origin/" + branch + "\n");
@@ -21,12 +34,8 @@ mason
     .description('Check is task is closed and generates the commands to delete the branch (locale and remote).')
     .action((cookieSession, branch) => {
 
-        if(!idRegex.test(branch)){
-            throw new Error("This branch has not a valid Redmine Id!!");
-        };
-
-        let taskId = branch.match(idRegex)[0];
-
+        let taskId = parseTaskId(null, branch);
+        //TODO: Make request async and use await.
         redmine.request(taskId, cookieSession, (body) => {
                                     redmine.isTaskClosed(
                                         body,
@@ -42,16 +51,10 @@ mason
     .option('-i, --task-id [taskId]', 'The id of the task')
     .description('Get the status for a task.')
     .action((cookieSession, opt) => {
-        if(!opt.branch && !opt.taskId){
-            throw new Error('And option is required')
-        }
 
-        if(opt.branch && !idRegex.test(opt.branch)){
-            throw new Error("This branch has not a valid Redmine Id!!");
-        };
+        taskId = parseTaskId(opt.taskId, opt.branch);
 
-        taskId = (opt.branch)? opt.branch.match(idRegex)[0] : opt.taskId;
-
+        //TODO: Make request async and use await.
         redmine.request(taskId, cookieSession, (body) => {
                                     redmine.getTaskStatus(body,
                                         (status) => console.log( + status));}

@@ -33,7 +33,7 @@ function getTaskStatus(body, callback){
 function isTaskClosed(body, nextStep, error){
   let status = taskStatus(body);
 
-  if (status = 'Closed') {
+  if (status === 'Closed') {
     nextStep();}
   else{
     error();};
