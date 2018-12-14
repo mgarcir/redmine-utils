@@ -22,8 +22,7 @@ function parseTaskId(taskId, branch){
 };
 
 function composeGitDeleteCommands(branch){
-    console.log("git push origin :origin/" + branch + "\n");
-    console.log("git branch -d " + branch + "\n");
+    console.log("git push origin :origin/" + branch + "; git branch -d " + branch + ";\n");
 };
 
 mason
@@ -35,14 +34,15 @@ mason
     .action((cookieSession, branch) => {
 
         let taskId = parseTaskId(null, branch);
-        //TODO: Make request async and use await.
-        redmine.request(taskId, cookieSession, (body) => {
-                                    redmine.isTaskClosed(
-                                        body,
-                                        () => composeGitDeleteCommands(branch),
-                                        () => {throw new Error('Branch is not Closed!!');})
-                                    }
-                        );
+
+        redmine.request(taskId, cookieSession).
+            then((body) => {
+                let isClosed = redmine.isTaskClosed(body);
+                isClosed? composeGitDeleteCommands(branch) : () => {throw new Error('Branch is not Closed!!')};
+            })
+            .catch(error => {
+                throw new Error('Branch is not Closed!! ');
+            });
     });
 
 mason
@@ -54,11 +54,14 @@ mason
 
         taskId = parseTaskId(opt.taskId, opt.branch);
 
-        //TODO: Make request async and use await.
-        redmine.request(taskId, cookieSession, (body) => {
-                                    redmine.getTaskStatus(body,
-                                        (status) => console.log( + status));}
-                       );
+        redmine.request(taskId, cookieSession).
+            then((body) => {
+                let status = redmine.getTaskStatus(body);
+                console.log("Status is: " + status);
+            })
+            .catch(error => {
+                throw new Error('Branch is not Closed!! ');
+            });
     });
 
 mason
