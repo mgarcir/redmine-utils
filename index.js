@@ -22,7 +22,7 @@ function parseTaskId(taskId, branch){
 };
 
 function composeGitDeleteCommands(branch){
-    console.log("git push origin :origin/" + branch + "; git branch -d " + branch + ";\n");
+    console.log("git push origin :origin/" + branch + "; git branch -D " + branch + ";\n");
 };
 
 mason
